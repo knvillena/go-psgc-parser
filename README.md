@@ -22,9 +22,10 @@ The project requires the following Go package:
 ### Input File Requirements
 - **Format**: Excel (.xlsx, .xlsm, .xltx, .xltm) or CSV (.csv)
 - **Data Sheet**: For Excel files, the sheet must be named `PSGC`
-- **Structure**: Hierarchical PSGC data with a header row, then these columns (any further columns are ignored):
-  - Column 0: 10-digit PSGC Code
-  - Column 1: Name/Description
+- **Structure**: Hierarchical PSGC data whose first row has these headings, in any column (other columns are ignored):
+  - `10-digit PSGC`
+  - `Name`
+- **Footnotes**: A footnote marker at the end of a name, such as `a/`, is removed
 
 ## Installation
 
@@ -56,13 +57,13 @@ Extract geographic levels directly from raw hierarchical PSGC Excel files withou
 
 ```bash
 # Extract all levels directly from Excel file
-./psgc-parser -all PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -all PSGC-3Q-2026-Publication-Datafile.xlsx
 
 # Extract individual levels directly from Excel file
-./psgc-parser -regions PSGC-3Q-2025-Publication-Datafile.xlsx
-./psgc-parser -provinces PSGC-3Q-2025-Publication-Datafile.xlsx
-./psgc-parser -cities PSGC-3Q-2025-Publication-Datafile.xlsx
-./psgc-parser -barangays PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -regions PSGC-3Q-2026-Publication-Datafile.xlsx
+./psgc-parser -provinces PSGC-3Q-2026-Publication-Datafile.xlsx
+./psgc-parser -cities PSGC-3Q-2026-Publication-Datafile.xlsx
+./psgc-parser -barangays PSGC-3Q-2026-Publication-Datafile.xlsx
 ```
 
 ### Clean Raw PSGC Data
@@ -72,7 +73,7 @@ Convert hierarchical PSGC data to a flattened format, one row per barangay with 
 ```bash
 # Clean Excel file (reads from "PSGC" sheet)
 # Output: output/psgc_cleaned_go.csv
-./psgc-parser -clean PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -clean PSGC-3Q-2026-Publication-Datafile.xlsx
 
 # Clean CSV file
 ./psgc-parser -clean raw_psgc_data.csv
@@ -88,7 +89,7 @@ The input can be the raw datafile (Excel or CSV) or a file made by `-clean`.
 #### Extract All Levels at Once
 ```bash
 # Directly from Excel file (preferred)
-./psgc-parser -all PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -all PSGC-3Q-2026-Publication-Datafile.xlsx
 
 # Or from cleaned CSV data
 ./psgc-parser -all output/psgc_cleaned_go.csv
@@ -110,7 +111,7 @@ This creates in the `output/` directory:
 
 ```bash
 # From Excel file (recommended)
-./psgc-parser -provinces PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -provinces PSGC-3Q-2026-Publication-Datafile.xlsx
 
 # Or from cleaned CSV data
 ./psgc-parser -provinces output/psgc_cleaned_go.csv
@@ -121,7 +122,7 @@ This creates in the `output/` directory:
 Single-level extraction and `-clean` accept a custom output file:
 
 ```bash
-./psgc-parser -regions PSGC-3Q-2025-Publication-Datafile.xlsx -output regions.csv
+./psgc-parser -regions PSGC-3Q-2026-Publication-Datafile.xlsx -output regions.csv
 ```
 
 `-all` ignores `-output` and always writes the four files above.
@@ -182,21 +183,21 @@ regcode,provcode,citycode,barangaycode,barangayname
 Extract all geographic levels directly from the Excel file in one step:
 
 ```bash
-./psgc-parser -all PSGC-3Q-2025-Publication-Datafile.xlsx
+./psgc-parser -all PSGC-3Q-2026-Publication-Datafile.xlsx
 ```
 
 **Files generated:**
 - `output/rregion.csv` - 18 regions
 - `output/rprovince.csv` - 118 province-level entries
 - `output/rcity.csv` - 1,655 cities, municipalities, and Manila districts
-- `output/rbarangay.csv` - 42,011 barangays
+- `output/rbarangay.csv` - 42,010 barangays
 
 ### Two-Step Workflow
 If you also need the cleaned data:
 
 1. **Clean raw PSGC data:**
    ```bash
-   ./psgc-parser -clean PSGC-3Q-2025-Publication-Datafile.xlsx
+   ./psgc-parser -clean PSGC-3Q-2026-Publication-Datafile.xlsx
    ```
 
 2. **Extract all geographic levels:**
@@ -210,7 +211,7 @@ This writes `output/psgc_cleaned_go.csv` and the same four files as direct extra
 
 ### Places Without a Province
 
-Every city and barangay has a province code, so these places appear in the provinces file as their own entry. The counts are for the 3rd quarter 2025 datafile.
+Every city and barangay has a province code, so these places appear in the provinces file as their own entry. The counts are for the 3rd quarter 2026 datafile.
 
 | Entries | Kind |
 | --- | --- |
@@ -233,4 +234,4 @@ Every city and barangay has a province code, so these places appear in the provi
 
 ## Data Source
 
-`PSGC-3Q-2025-Publication-Datafile.xlsx` is published by the Philippine Statistics Authority (PSA) and included here with acknowledgement of the PSA as the source. The PSA distributes the PSGC without warranty. The [MIT License](LICENSE) covers the code, not the datafile.
+`PSGC-3Q-2026-Publication-Datafile.xlsx` is published by the Philippine Statistics Authority (PSA) and included here with acknowledgement of the PSA as the source. The PSA distributes the PSGC without warranty. The [MIT License](LICENSE) covers the code, not the datafile.

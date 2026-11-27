@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -463,10 +464,10 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		fmt.Println("Usage: go run main.go [options] <input_file>")
+		fmt.Printf("Usage: %s [options] <input_file>\n", filepath.Base(os.Args[0]))
 		fmt.Println("Options:")
 		flag.PrintDefaults()
-		fmt.Println("Supported input formats: Excel (.xlsx, .xls, .xlsm, .xltx, .xltm) and CSV (.csv)")
+		fmt.Println("Supported input formats: Excel (.xlsx, .xlsm, .xltx, .xltm) and CSV (.csv)")
 		os.Exit(1)
 	}
 
@@ -500,9 +501,9 @@ func main() {
 	// Parse the input file
 	switch fileType {
 	case FileTypeExcel:
-		// For Excel files, if extraction is requested, read directly from "PSGC" sheet
+		// For Excel files, if extraction or cleaning is requested, read directly from "PSGC" sheet
 		// Otherwise, parse all sheets (for backward compatibility with existing workflows)
-		if extractionRequested && !*cleanPSGCFlag {
+		if extractionRequested || *cleanPSGCFlag {
 			records, err = readExcelSheet(inputFile, "PSGC")
 			if err != nil {
 				log.Fatalf("Failed to read PSGC sheet from Excel file: %v", err)
@@ -522,7 +523,7 @@ func main() {
 		}
 		fmt.Printf("Parsed CSV file: %s\n", inputFile)
 	default:
-		log.Fatalf("Unsupported file type. Supported formats: Excel (.xlsx, .xls, .xlsm, .xltx, .xltm) and CSV (.csv)")
+		log.Fatalf("Unsupported file type. Supported formats: Excel (.xlsx, .xlsm, .xltx, .xltm) and CSV (.csv)")
 	}
 
 	// A cleaned file holds each barangay with its parents, so split it back into code and name rows
@@ -534,6 +535,37 @@ func main() {
 			}
 		}
 		records = split
+	}
+
+	// Find the code and name columns by their headings, since their position differs between publications
+	if extractionRequested || *cleanPSGCFlag {
+		codeColumn, nameColumn := -1, -1
+		if len(records) > 0 {
+			for column, heading := range records[0] {
+				// A CSV saved by Excel can start with a byte order mark
+				switch strings.TrimSpace(strings.TrimPrefix(heading, "\uFEFF")) {
+				case "10-digit PSGC":
+					codeColumn = column
+				case "Name":
+					nameColumn = column
+				}
+			}
+		}
+		if codeColumn < 0 || nameColumn < 0 {
+			log.Fatal(`The first row must have the "10-digit PSGC" and "Name" headings`)
+		}
+
+		// A footnote marker such as "a/" is read as the end of the name
+		footnoteMarker := regexp.MustCompile(`[a-z0-9]/$`)
+
+		selected := [][]string{}
+		for _, row := range records {
+			if len(row) > codeColumn && len(row) > nameColumn {
+				name := footnoteMarker.ReplaceAllString(strings.TrimSpace(row[nameColumn]), "")
+				selected = append(selected, []string{row[codeColumn], name})
+			}
+		}
+		records = selected
 	}
 
 	// Extract regions if requested
@@ -562,15 +594,6 @@ func main() {
 
 	// Clean PSGC data if requested
 	if *cleanPSGCFlag {
-		if fileType == FileTypeExcel {
-			// For Excel files, read specifically from "PSGC" sheet
-			excelErr := error(nil)
-			records, excelErr = readExcelSheet(inputFile, "PSGC")
-			if excelErr != nil {
-				log.Fatalf("Failed to read PSGC sheet from Excel file: %v", excelErr)
-			}
-			fmt.Printf("Read PSGC sheet from Excel file: %s\n", inputFile)
-		}
 		records = cleanPSGC(records)
 		fmt.Println("Cleaned PSGC data to flattened format")
 	}
